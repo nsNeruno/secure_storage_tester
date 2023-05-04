@@ -7,6 +7,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:secure_storage_tester/src/alert_util.dart';
 import 'package:uuid/uuid.dart';
 
+import 'log_util.dart';
+
 part 'pages/android_options.dart';
 part 'pages/ios_options.dart';
 
@@ -160,6 +162,10 @@ class _TestHomePageState extends State<TestHomePage> {
     final key = _keyNameController.text;
     final data = _dataController.text;
     try {
+      debugLog(
+        () => 'Writing $data to $key',
+        name: '$runtimeType.testSave',
+      );
       await storage.write(key: key, value: data,);
     } catch (_) {
       _error.value = _ is PlatformException
@@ -206,20 +212,34 @@ class _TestHomePageState extends State<TestHomePage> {
       return;
     }
     final key = _keyNameController.text;
-    _storage?.deleteAll();
 
     showAdaptiveDialog(
       context: context,
       builder: (_) {
         return AlertDialog(
           title: const Text('Read Result',),
-          content: FutureBuilder(
-            future: storage.read(key: key,),
-            builder: (_, snapshot,) {
-              return Text(
-                '$key: ${snapshot.data}',
-              );
-            },
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FutureBuilder(
+                future: storage.read(key: key,),
+                builder: (_, snapshot,) {
+                  return Center(
+                    child: Text(
+                      '$key: ${snapshot.data}',
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8.0,),
+              const Text('Android Config:',),
+              Text(
+                jsonEncodePretty(
+                  storage.aOptions.toMap(),
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
